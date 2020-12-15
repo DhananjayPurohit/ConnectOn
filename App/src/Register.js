@@ -23,7 +23,7 @@ export default class Auth extends Component {
       });
       const userInfo = await GoogleSignin.signIn();
       console.log('User Info --> ', userInfo);
-      this.props.navigation.navigate("Room");
+      this.props.navigation.navigate("RoomList");
     } catch (error) {
       console.log('Message', error.message);
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {

@@ -183,6 +183,16 @@ app.get("/broadcast", (req, res) => {
   });
 });
 
+//All user
+app.get("/find/all", (req,res) => {
+  const user = User.find();
+  user.exec().then(data => {
+    res.json(data);
+    console.log(data)
+  });
+  // res.json("Hello");
+});
+
 //User finder API
 app.get("/find/:id", (req, res) => {
   const user = User.find({ id: req.params.id });
