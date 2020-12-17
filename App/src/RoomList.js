@@ -6,7 +6,7 @@ import { GoogleSignin, GoogleSigninButton, statusCodes } from "react-native-goog
 import axios from 'axios';
 import io from 'socket.io-client';
 
-const socket = io('http://192.168.43.119:3000');
+const socket = io(process.env.serverUrl);
 
 class FlatListDemo extends Component {
   constructor(props) {
@@ -27,7 +27,7 @@ class FlatListDemo extends Component {
     const getUser = async() => {
       const currentUser = await GoogleSignin.getCurrentUser();
       await axios
-        .post('http://192.168.43.119:8000' + '/login/', {
+        .post(process.env.serverUrl + '/login/', {
                 name: currentUser.user.name,
                 id: currentUser.user.id,
                 photo: currentUser.user.photo,
@@ -43,7 +43,7 @@ class FlatListDemo extends Component {
   }
 
   makeRemoteRequest = () => {
-    const url = `http://192.168.43.119:8000/find/all`;
+    const url = `${process.env.serverUrl}/find/all`;
     this.setState({loading: true});
 
     fetch(url)
@@ -121,7 +121,7 @@ class FlatListDemo extends Component {
           renderItem={({item}) => (
             <ListItem onPress={() => {
               axios
-                .post('http://192.168.43.119:8000' + '/chats/', {
+                .post(process.env.serverUrl + '/chats/', {
                   sender: this.state.user._id, //sender_id
                   reciever: item.id,
                   messages: [],

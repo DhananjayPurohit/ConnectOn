@@ -4,7 +4,7 @@ import io from 'socket.io-client';
 import axios from 'axios';
 import { GoogleSignin, GoogleSigninButton, statusCodes } from "react-native-google-signin";
 
-const socket = io('http://192.168.43.119:3000');
+const socket = io(process.env.serverUrl);
 
 const CreateRoom = ({navigation}) => {
   const [text, setText] = useState('');
@@ -15,7 +15,7 @@ const CreateRoom = ({navigation}) => {
       const currentUser = await GoogleSignin.getCurrentUser();
       setUser(currentUser);
       await axios
-        .post('http://192.168.43.119:8000' + '/login/', {
+        .post(process.env.serverUrl + '/login/', {
                 name: currentUser.user.name,
                 id: currentUser.user.id,
                 photo: currentUser.user.photo,
@@ -43,7 +43,7 @@ const CreateRoom = ({navigation}) => {
           console.log("Create")
           navigation.navigate('Chat')
           axios
-          .post('http://192.168.43.119:8000' + '/chats/', {
+          .post(process.env.serverUrl + '/chats/', {
               sender: user.user.id, //sender_id
               reciever: "recieveridbyflatlist",
               messages:[]

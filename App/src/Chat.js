@@ -3,14 +3,14 @@ import { GiftedChat } from 'react-native-gifted-chat'
 import io from 'socket.io-client'
 import axios from 'axios';
 
-var socket = io("http://192.168.43.119:8000");
+var socket = io(process.env.serverUrl);
 
 const Chat = ({navigation}) =>  {
   const [messages, setMessages] = useState([]);
   const sender=navigation.getParam('sender',null);
   const receiver=navigation.getParam('receiver',null);
   useEffect(() => {
-    const url=`http://192.168.43.119:8000/${sender.id}/${receiver.id}`;
+    const url=`${process.env.serverUrl}/${sender.id}/${receiver.id}`;
     fetch(url)
       .then((res) => res.json())
       .then((res) => {
@@ -38,7 +38,7 @@ const Chat = ({navigation}) =>  {
     setMessages(previousMessages => GiftedChat.append(previousMessages, messages))
     socket.emit('newMessage', messages)
     axios
-        .post('http://192.168.43.119:8000' + '/chats', {
+        .post(process.env.serverUrl + '/chats', {
                 sender: sender.id,
                 receiver: receiver.id,
                 messages: messages
