@@ -1,0 +1,10 @@
+{
+    "azureFunctions.deploySubpath": ".",
+    "azureFunctions.postDeployTask": "npm install",
+    "azureFunctions.projectLanguage": "JavaScript",
+    "azureFunctions.projectRuntime": "~3",
+    "debug.internalConsoleOptions": "neverOpen",
+    "azureFunctions.preDeployTask": "npm prune",
+    "appService.defaultWebAppToDeploy": "/subscriptions/2d96ae51-eeb7-4781-b7e0-0240ffe19785/resourceGroups/ConnectOn/providers/Microsoft.Web/sites/ConnectOn",
+    "appService.deploySubpath": "."
+}

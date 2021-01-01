@@ -20,7 +20,7 @@ const Broadcast = require("./models/Broadcast");
 require("dotenv/config");
 
 //Initialize the server
-const port = 8000; //Default port
+const port = process.env.PORT || 1337; //Default port
 const app = express(); //Define the express app
 const server = http.createServer(app); //Create server with express
 const io = socketIo(server); //Initialize Socket

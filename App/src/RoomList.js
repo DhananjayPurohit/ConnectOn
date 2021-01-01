@@ -5,8 +5,11 @@ import { TouchableHighlight } from 'react-native-gesture-handler';
 import { GoogleSignin, GoogleSigninButton, statusCodes } from "react-native-google-signin";
 import axios from 'axios';
 import io from 'socket.io-client';
+import {SERVER_URL} from 'react-native-dotenv';
 
-const socket = io(process.env.serverUrl);
+const socket = io(SERVER_URL);
+
+console.log(SERVER_URL);
 
 class FlatListDemo extends Component {
   constructor(props) {
