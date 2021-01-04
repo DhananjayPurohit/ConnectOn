@@ -5,7 +5,7 @@ import { TouchableHighlight } from 'react-native-gesture-handler';
 import { GoogleSignin, GoogleSigninButton, statusCodes } from "react-native-google-signin";
 import axios from 'axios';
 import io from 'socket.io-client';
-import {SERVER_URL} from 'react-native-dotenv';
+import {SERVER_URL} from '@env';
 
 const socket = io(SERVER_URL);
 
@@ -30,7 +30,7 @@ class FlatListDemo extends Component {
     const getUser = async() => {
       const currentUser = await GoogleSignin.getCurrentUser();
       await axios
-        .post(process.env.serverUrl + '/login/', {
+        .post(SERVER_URL + '/login/', {
                 name: currentUser.user.name,
                 id: currentUser.user.id,
                 photo: currentUser.user.photo,
@@ -40,13 +40,12 @@ class FlatListDemo extends Component {
                 console.log(error);
         });
         this.setState({user: currentUser});
-        console.log("H"+this.state.user)
       }
       getUser()
   }
 
   makeRemoteRequest = () => {
-    const url = `${process.env.serverUrl}/find/all`;
+    const url = `${SERVER_URL}/find/all`;
     this.setState({loading: true});
 
     fetch(url)
@@ -58,8 +57,6 @@ class FlatListDemo extends Component {
           loading: false,
         });
         this.arrayholder = res.results;
-        console.log('Hey' + this.state.data);
-        console.log('Hey' + this.arrayholder);
       })
       .catch((error) => {
         this.setState({error, loading: false});
@@ -124,8 +121,8 @@ class FlatListDemo extends Component {
           renderItem={({item}) => (
             <ListItem onPress={() => {
               axios
-                .post(process.env.serverUrl + '/chats/', {
-                  sender: this.state.user._id, //sender_id
+                .post(SERVER_URL + '/chats/', {
+                  sender: this.state.user.user.id, //sender_id
                   reciever: item.id,
                   messages: [],
                 })
@@ -136,7 +133,7 @@ class FlatListDemo extends Component {
               socket.emit('storeClientInfo', this.state.user);
               console.log('Create');
               this.props.navigation.navigate('Chat',{
-                sender: this.state.user,
+                sender: this.state.user.user,
                 receiver: item
               });
             }}

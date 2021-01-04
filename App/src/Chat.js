@@ -2,19 +2,21 @@ import React, { useState, useCallback, useEffect } from 'react'
 import { GiftedChat } from 'react-native-gifted-chat'
 import io from 'socket.io-client'
 import axios from 'axios';
+import {SERVER_URL} from '@env';
 
-var socket = io(process.env.serverUrl);
+var socket = io(SERVER_URL);
 
 const Chat = ({navigation}) =>  {
   const [messages, setMessages] = useState([]);
   const sender=navigation.getParam('sender',null);
   const receiver=navigation.getParam('receiver',null);
   useEffect(() => {
-    const url=`${process.env.serverUrl}/${sender.id}/${receiver.id}`;
+    const url=`${SERVER_URL}/chats/${sender.id}/${receiver.id}`;
     fetch(url)
       .then((res) => res.json())
       .then((res) => {
-        setMessages(res.messages);
+        console.log("R"+res);
+        setMessages(res);
       })
       .catch((error) => {
         console.log(error);
@@ -31,14 +33,16 @@ const Chat = ({navigation}) =>  {
         },
       },
     ])
+    socket.on("chat message", msg => {
+      setMessages([...messages, msg]);
+    });
   }, [])
  
   const onSend = useCallback((messages = []) => {
-    console.log(messages)
     setMessages(previousMessages => GiftedChat.append(previousMessages, messages))
     socket.emit('newMessage', messages)
     axios
-        .post(process.env.serverUrl + '/chats', {
+        .post(SERVER_URL + '/chats', {
                 sender: sender.id,
                 receiver: receiver.id,
                 messages: messages
@@ -47,7 +51,7 @@ const Chat = ({navigation}) =>  {
                 console.log("Hell");
                 console.log(error);
         });
-    console.log(messages)
+    console.log(sender.id+" "+receiver.id)
   }, [])
 
   // const onSend = async (message = []) => { const newMessages = await GiftedChat.append(messages, message) 

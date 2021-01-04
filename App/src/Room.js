@@ -3,8 +3,9 @@ import { Text, TextInput, View, Button } from 'react-native';
 import io from 'socket.io-client';
 import axios from 'axios';
 import { GoogleSignin, GoogleSigninButton, statusCodes } from "react-native-google-signin";
+import {SERVER_URL} from '@env';
 
-const socket = io(process.env.serverUrl);
+const socket = io(SERVER_URL);
 
 const CreateRoom = ({navigation}) => {
   const [text, setText] = useState('');

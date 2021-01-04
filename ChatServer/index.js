@@ -106,7 +106,7 @@ app.post("/chats", (req, res) => {
               { reciever: req.body.sender, sender: req.body.reciever }
             ]
           },
-          { $set: { messages: req.body.messages } }
+          { $set: { messages: [...messages, req.body.messages] } }
         );
         updateChat
           .exec()
