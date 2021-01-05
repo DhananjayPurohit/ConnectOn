@@ -218,7 +218,7 @@ app.get("/users/inactive", (req, res) => {
 });
 
 app.get("/serve", (req, res) => {
-  res.json("Hello Connecton");
+  res.json("Hello Connecton!");
 })
 
 /** Socket Declarations */
