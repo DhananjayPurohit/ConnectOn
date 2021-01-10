@@ -74,6 +74,7 @@ app.post("/login", (req, res) => {
 
 //New chat message API
 app.post("/chats", (req, res) => {
+  console.log(req.body.sender+" "+req.body.reciever)
   const query = Chat.findOne({
     $or: [
       { reciever: req.body.reciever, sender: req.body.sender },
@@ -106,7 +107,7 @@ app.post("/chats", (req, res) => {
               { reciever: req.body.sender, sender: req.body.reciever }
             ]
           },
-          { $set: { messages: [...messages, req.body.messages] } }
+          { $push: { messages: req.body.messages } }
         );
         updateChat
           .exec()
