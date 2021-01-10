@@ -276,7 +276,7 @@ chatSocket.on("connection", function(socket) {
   //On new message
   socket.on("newMessage", data => {
     //Notify the room
-    socket.broadcast.emit("incommingMessage", "reload");
+    socket.broadcast.emit("chat message", data);
   });
 });
 
