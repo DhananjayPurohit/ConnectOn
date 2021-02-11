@@ -257,7 +257,7 @@ io.on("connection", socket => {
   console.log("New User Connected");
   socket.on("message", data => {
     console.log("Message Received at Backend "+ data)
-    socket.broadcast.emit("message", data);
+    socket.emit("message", data);
     console.log("Emitted message");
   })
   socket.on("storeClientInfo", function(data) {
