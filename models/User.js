@@ -9,10 +9,12 @@ const UserSchema = mongoose.Schema({
   name: String,
   id: String,
   photo: String,
+  email: String,
   isActive: {
     type: Boolean,
     default: false
-  }
+  },
+  recentChat: []
 });
 
 module.exports = mongoose.model("Users", UserSchema);

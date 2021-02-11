@@ -50,7 +50,8 @@ app.post("/login", (req, res) => {
         const user = new User({
           name: req.body.name,
           id: req.body.id,
-          photo: req.body.photo
+          photo: req.body.photo,
+          email: req.body.email
         });
 
         user
@@ -74,7 +75,7 @@ app.post("/login", (req, res) => {
 
 //New chat message API
 app.post("/chats", (req, res) => {
-  console.log(req.body.sender+" "+req.body.reciever)
+  
   const query = Chat.findOne({
     $or: [
       { reciever: req.body.reciever, sender: req.body.sender },
@@ -84,21 +85,29 @@ app.post("/chats", (req, res) => {
   query
     .exec()
     .then(data => {
-      if (data === null) {
-        const chat = new Chat({
-          sender: req.body.sender,
-          reciever: req.body.reciever,
-          messages: req.body.messages
-        });
 
-        chat
-          .save()
-          .then(data => {
-            res.json(data);
-          })
-          .catch(error => {
-            res.json(error);
-          });
+      const chat = new Chat({
+        sender: req.body.sender,
+        reciever: req.body.reciever,
+        messages: req.body.messages
+      });
+
+      const query1 = User.find({ id: req.body.sender },
+        { $push: { recentChat: { chatwith: req.body.reciever, message: req.body.messages} } }
+        );
+
+      if (data === null) {
+        Promise.all([
+          chat.save(),
+          query1.exec()
+      ]).then(data => {
+        console.log("Hello");
+        res.json(data);
+      })
+      .catch(error => {
+        res.json(error);
+      });
+
       } else {
         const updateChat = Chat.updateOne(
           {
@@ -109,14 +118,32 @@ app.post("/chats", (req, res) => {
           },
           { $push: { messages: req.body.messages } }
         );
-        updateChat
-          .exec()
-          .then(data => {
+
+        const query1 = User.find({ id: req.body.sender },
+          { $push: { recentChat: { chatwith: req.body.reciever, message: req.body.messages} } }
+          );
+          Promise.all([
+            updateChat.exec(),
+            query1.exec()
+        ]).then(data => {
+        console.log("Hello1");
             res.json(data);
           })
           .catch(error => {
             res.json(error);
           });
+          
+          // const query1 = User.find({ id: req.body.sender },
+          //   { $push: { recentChat: { chatwith: req.body.reciever, message: req.body.messages} } }
+          //   );
+          //  query1
+          //  .exec()
+          //  .then(data => {
+          //    res.json(data);
+          //  })
+          //  .catch(error => {
+          //    res.json(error);
+          //  });
       }
     })
     .catch(error => {
@@ -228,6 +255,11 @@ var clients = []; //connected clients
 
 io.on("connection", socket => {
   console.log("New User Connected");
+  socket.on("message", data => {
+    console.log("Message Received at Backend "+ data)
+    socket.broadcast.emit("message", data);
+    console.log("Emitted message");
+  })
   socket.on("storeClientInfo", function(data) {
     console.log(data.customId + " Connected");
     //store the new client
