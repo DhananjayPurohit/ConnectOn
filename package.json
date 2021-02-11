@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "lint": "eslint ."
   },
   "author": "",
   "license": "ISC",
@@ -17,5 +18,9 @@
     "mongoose": "^5.7.5",
     "nodemon": "^1.19.3",
     "socket.io": "^2.3.0"
+  },
+  "devDependencies": {
+    "@react-native-community/eslint-config": "^2.0.0",
+    "eslint": "^7.17.0"
   }
 }
