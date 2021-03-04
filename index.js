@@ -5,11 +5,9 @@
 
 //libraies
 const express = require("express");
-const http = require("http");
-const socketIo = require("socket.io");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
-const cors = require('cors');
+const cors = require("cors");
 
 //DB Models
 const User = require("./models/User");
@@ -22,12 +20,21 @@ require("dotenv/config");
 //Initialize the server
 const port = process.env.PORT || 1337; //Default port
 const app = express(); //Define the express app
-const server = http.createServer(app); //Create server with express
-const io = socketIo(server); //Initialize Socket
 
 //Enabling JSON parser
 app.use(bodyParser.json());
 app.use(cors());
+
+const server = app.listen(port, function() {
+  console.log('server running on port' + port);
+});
+
+const io = require('socket.io')(server, {
+  cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    }
+});
 
 //DB Connection
 mongoose.connect(
@@ -45,122 +52,181 @@ app.post("/login", (req, res) => {
   const query = User.find({ id: req.body.id });
   query
     .exec()
-    .then(data => {
+    .then((data) => {
       if (data.length === 0) {
         const user = new User({
           name: req.body.name,
           id: req.body.id,
           photo: req.body.photo,
-          email: req.body.email
+          email: req.body.email,
         });
 
         user
           .save()
-          .then(data => {
+          .then((data) => {
             res.json(data);
           })
-          .catch(error => {
+          .catch((error) => {
             res.json(error);
-            console.log(error)
+            console.log(error);
           });
-          console.log("Data")
+        console.log("Data");
       } else {
         res.json(data[0]);
       }
     })
-    .catch(error => {
+    .catch((error) => {
       res.json(error);
     });
 });
 
 //New chat message API
 app.post("/chats", (req, res) => {
-  
   const query = Chat.findOne({
     $or: [
-      { reciever: req.body.reciever, sender: req.body.sender },
-      { reciever: req.body.sender, sender: req.body.reciever }
-    ]
+      { receiver: req.body.receiver, sender: req.body.sender },
+      { receiver: req.body.sender, sender: req.body.receiver },
+    ],
   });
   query
     .exec()
-    .then(data => {
-
+    .then((data) => {
       const chat = new Chat({
         sender: req.body.sender,
-        reciever: req.body.reciever,
-        messages: req.body.messages
+        receiver: req.body.receiver,
+        messages: req.body.messages,
       });
+      console.log(req.body.messages);
 
-      const query1 = User.find({ id: req.body.sender },
-        { $push: { recentChat: { chatwith: req.body.reciever, message: req.body.messages} } }
-        );
+      const querysenderset = User.updateOne(
+        {
+          id: req.body.sender,
+        },
+        {
+          $push: {
+            recentChat: {
+              chatWith: req.body.receiver,
+              sender: true,
+              message: req.body.messages,
+            },
+          },
+        }
+      );
 
+      const queryreceiverset = User.updateOne(
+        {
+          id: req.body.receiver,
+        },
+        {
+          $push: {
+            recentChat: {
+              chatWith: req.body.sender,
+              sender: false,
+              message: req.body.messages,
+            },
+          },
+        }
+      );
+
+      const querysenderupdate = User.updateOne(
+        {
+          id: req.body.sender,
+          "recentChat.chatWith": req.body.receiver,
+        },
+        {
+          $set: {
+            recentChat: {
+              chatWith: req.body.receiver,
+              sender: true,
+              message: req.body.messages,
+            },
+          },
+        }
+      );
+
+      const queryreceiverupdate = User.updateOne(
+        {
+          id: req.body.receiver,
+          "recentChat.chatWith": req.body.sender,
+        },
+        {
+          $set: {
+            recentChat: {
+              chatWith: req.body.sender,
+              sender: false,
+              message: req.body.messages,
+            },
+          },
+        }
+      );
       if (data === null) {
+        console.log("hey");
         Promise.all([
           chat.save(),
-          query1.exec()
-      ]).then(data => {
-        console.log("Hello");
-        res.json(data);
-      })
-      .catch(error => {
-        res.json(error);
-      });
-
+          querysenderset.exec(),
+          queryreceiverset.exec(),
+        ])
+          .then((data) => {
+            console.log("Hellop");
+            res.json(data);
+          })
+          .catch((error) => {
+            res.json(error);
+          });
       } else {
+        console.log("He")
         const updateChat = Chat.updateOne(
           {
             $or: [
-              { reciever: req.body.reciever, sender: req.body.sender },
-              { reciever: req.body.sender, sender: req.body.reciever }
-            ]
+              { receiver: req.body.receiver, sender: req.body.sender },
+              { receiver: req.body.sender, sender: req.body.receiver },
+            ],
           },
           { $push: { messages: req.body.messages } }
         );
 
-        const query1 = User.find({ id: req.body.sender },
-          { $push: { recentChat: { chatwith: req.body.reciever, message: req.body.messages} } }
-          );
-          Promise.all([
-            updateChat.exec(),
-            query1.exec()
-        ]).then(data => {
-        console.log("Hello1");
+        Promise.all([
+          updateChat.exec(),
+          querysenderupdate.exec(),
+          queryreceiverupdate.exec(),
+        ])
+          .then((data) => {
+            console.log("Hello1");
             res.json(data);
           })
-          .catch(error => {
+          .catch((error) => {
             res.json(error);
           });
-          
-          // const query1 = User.find({ id: req.body.sender },
-          //   { $push: { recentChat: { chatwith: req.body.reciever, message: req.body.messages} } }
-          //   );
-          //  query1
-          //  .exec()
-          //  .then(data => {
-          //    res.json(data);
-          //  })
-          //  .catch(error => {
-          //    res.json(error);
-          //  });
+
+        // const query1 = User.find({ id: req.body.sender },
+        //   { $push: { recentChat: { chatwith: req.body.receiver, message: req.body.messages} } }
+        //   );
+        //  query1
+        //  .exec()
+        //  .then(data => {
+        //    res.json(data);
+        //  })
+        //  .catch(error => {
+        //    res.json(error);
+        //  });
       }
     })
-    .catch(error => {
+    .catch((error) => {
+      console.log(error)
       res.json(error);
     });
 });
 
 //Chat messages getter API
-app.get("/chats/:sender/:reciever", (req, res) => {
+app.get("/chats/:sender/:receiver", (req, res) => {
   const chat = Chat.findOne({
     $or: [
-      { reciever: req.params.reciever, sender: req.params.sender },
-      { reciever: req.params.sender, sender: req.params.reciever }
-    ]
+      { receiver: req.params.receiver, sender: req.params.sender },
+      { receiver: req.params.sender, sender: req.params.receiver },
+    ],
   });
 
-  chat.exec().then(data => {
+  chat.exec().then((data) => {
     if (data === null) {
       res.json([]);
     } else {
@@ -172,10 +238,10 @@ app.get("/chats/:sender/:reciever", (req, res) => {
 //Chatrooms getter API
 app.get("/chats/:userId", (req, res) => {
   const chat = Chat.find({
-    $or: [{ reciever: req.params.userId }, { sender: req.params.userId }]
+    $or: [{ receiver: req.params.userId }, { sender: req.params.userId }],
   });
 
-  chat.exec().then(data => {
+  chat.exec().then((data) => {
     if (data.length === 0) {
       res.json([]);
     } else {
@@ -190,10 +256,10 @@ app.post("/broadcast", (req, res) => {
 
   broadcast
     .save()
-    .then(data => {
+    .then((data) => {
       res.json(data);
     })
-    .catch(error => {
+    .catch((error) => {
       res.json(error);
     });
 });
@@ -202,7 +268,7 @@ app.post("/broadcast", (req, res) => {
 app.get("/broadcast", (req, res) => {
   const chat = Broadcast.find();
 
-  chat.exec().then(data => {
+  chat.exec().then((data) => {
     if (data === null) {
       res.json(data);
     } else {
@@ -212,11 +278,11 @@ app.get("/broadcast", (req, res) => {
 });
 
 //All user
-app.get("/find/all", (req,res) => {
+app.get("/find/all", (req, res) => {
   const user = User.find();
-  user.exec().then(data => {
+  user.exec().then((data) => {
     res.json(data);
-    console.log(data)
+    console.log(data);
   });
   // res.json("Hello");
 });
@@ -224,7 +290,7 @@ app.get("/find/all", (req,res) => {
 //User finder API
 app.get("/find/:id", (req, res) => {
   const user = User.find({ id: req.params.id });
-  user.exec().then(data => {
+  user.exec().then((data) => {
     res.json(data[0]);
   });
 });
@@ -232,7 +298,7 @@ app.get("/find/:id", (req, res) => {
 //Active users finder API
 app.get("/users/active", (req, res) => {
   const users = User.find({ isActive: true });
-  users.exec().then(data => {
+  users.exec().then((data) => {
     res.json(data);
   });
 });
@@ -240,27 +306,27 @@ app.get("/users/active", (req, res) => {
 //Inactive users finder API
 app.get("/users/inactive", (req, res) => {
   const users = User.find({ isActive: false });
-  users.exec().then(data => {
+  users.exec().then((data) => {
     res.json(data);
   });
 });
 
 app.get("/serve", (req, res) => {
   res.json("Hello Connecton!");
-})
+});
 
 /** Socket Declarations */
 
 var clients = []; //connected clients
 
-io.on("connection", socket => {
+io.on("connection", (socket) => {
   console.log("New User Connected");
-  socket.on("message", data => {
-    console.log("Message Received at Backend "+ data)
+  socket.on("message", (data) => {
+    console.log("Message Received at Backend " + data);
     socket.emit("message", data);
     console.log("Emitted message");
-  })
-  socket.on("storeClientInfo", function(data) {
+  });
+  socket.on("storeClientInfo", function (data) {
     console.log(data.customId + " Connected");
     //store the new client
     var clientInfo = new Object();
@@ -279,7 +345,7 @@ io.on("connection", socket => {
     });
   });
 
-  socket.on("disconnect", function(data) {
+  socket.on("disconnect", function (data) {
     for (var i = 0, len = clients.length; i < len; ++i) {
       var c = clients[i];
 
@@ -290,7 +356,7 @@ io.on("connection", socket => {
 
         //update the active status
         const res = User.updateOne({ id: c.customId }, { isActive: false });
-        res.exec().then(data => {
+        res.exec().then((data) => {
           console.log("Deactivated " + c.customId);
 
           //notify others
@@ -304,13 +370,12 @@ io.on("connection", socket => {
 
 //Messages Socket
 const chatSocket = io.of("/chatsocket");
-chatSocket.on("connection", function(socket) {
+chatSocket.on("connection", function (socket) {
   //On new message
-  socket.on("newMessage", data => {
+  socket.on("newMessage", (data) => {
     //Notify the room
     socket.broadcast.emit("chat message", data);
   });
 });
 
-//Let the server to listen
-server.listen(port, () => console.log(`Listening on port ${port}`));
+
